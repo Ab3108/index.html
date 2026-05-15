@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Claude AI — 20 Questões</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --ink: #1a1814;
+  --ink2: #3d3a35;
+  --muted: #8a8580;
+  --light: #f5f2ee;
+  --paper: #faf8f5;
+  --white: #ffffff;
+  --rule: rgba(26,24,20,0.1);
+  --rule-strong: rgba(26,24,20,0.2);
+  --accent: #c8430a;
+  --accent-light: #fdf0eb;
+  --correct: #1a6b3a;
+  --correct-light: #eaf5ee;
+  --correct-border: rgba(26,107,58,0.25);
+  --wrong: #b82c2c;
+  --wrong-light: #fdeaea;
+  --wrong-border: rgba(184,44,44,0.25);
+  --radius: 4px;
+  --radius-lg: 8px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* subtle grid bg */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 32px 100px;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  border-bottom: 3px solid var(--ink);
+  padding: 40px 0 20px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.masthead-left .eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.masthead-left h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(42px, 7vw, 72px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.masthead-left h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.masthead-right {
+  text-align: right;
+  padding-bottom: 4px;
+}
+
+.issue-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.8;
+  border: 1px solid var(--rule-strong);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+}
+
+.deck-line {
+  display: flex;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule-strong);
+  margin-bottom: 40px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+  flex-wrap: wrap;
+}
+
+.deck-line span { display: flex; align-items: center; gap: 6px; }
+.deck-line span::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+/* ── PROGRESS ── */
+.progress-section {
+  margin-bottom: 32px;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.progress-meta .label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.progress-meta .count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink2);
+  font-weight: 500;
+}
+
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: var(--rule-strong);
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+
+.progress-ticks {
+  display: flex;
+  gap: 0;
+  margin-top: 6px;
+}
+
+.tick {
+  flex: 1;
+  height: 3px;
+  border-right: 1px solid var(--paper);
+  background: var(--rule);
+  transition: background 0.3s;
+}
+
+.tick.done-correct { background: var(--correct); }
+.tick.done-wrong { background: var(--wrong); }
+.tick.current { background: var(--accent); opacity: 0.5; }
+
+/* ── QUESTION CARD ── */
+.q-card {
+  background: var(--white);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  padding: 40px 40px 32px;
+  margin-bottom: 16px;
+  animation: slideIn 0.3s cubic-bezier(.4,0,.2,1) both;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+@keyframes slideIn {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.q-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.q-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--light);
+  letter-spacing: -0.04em;
+  flex-shrink: 0;
+}
+
+.q-category {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.q-text {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* ── OPTIONS ── */
+.options { display: flex; flex-direction: column; gap: 8px; }
+
+.opt-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 13px 16px;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.5;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.opt-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.opt-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--white);
+  transform: translateX(2px);
+}
+
+.opt-btn:hover:not(:disabled)::before { background: var(--accent); }
+.opt-btn:active:not(:disabled) { transform: scale(0.99); }
+.opt-btn:disabled { cursor: default; }
+
+.opt-key {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  min-width: 20px;
+  padding-top: 1px;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+.opt-btn.correct {
+  border-color: var(--correct-border);
+  background: var(--correct-light);
+  color: var(--correct);
+}
+.opt-btn.correct::before { background: var(--correct); }
+.opt-btn.correct .opt-key { color: var(--correct); }
+
+.opt-btn.wrong {
+  border-color: var(--wrong-border);
+  background: var(--wrong-light);
+  color: var(--wrong);
+}
+.opt-btn.wrong::before { background: var(--wrong); }
+.opt-btn.wrong .opt-key { color: var(--wrong); }
+
+/* ── FEEDBACK ── */
+.feedback {
+  display: none;
+  margin-top: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 300;
+  border-left: 3px solid transparent;
+}
+
+.feedback.show { display: block; animation: slideIn 0.2s ease both; }
+.feedback.ok { background: var(--correct-light); border-color: var(--correct); color: var(--correct); }
+.feedback.err { background: var(--wrong-light); border-color: var(--wrong); color: var(--wrong); }
+.feedback strong { font-weight: 500; }
+
+/* ── NAV ── */
+.nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.score-info {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.score-info strong { color: var(--accent); font-weight: 500; }
+
+.btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule-strong);
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.btn:hover:not(:disabled) { background: var(--light); border-color: var(--ink2); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.3; cursor: default; }
+
+.btn.primary {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+
+.btn.primary:hover:not(:disabled) { background: var(--ink2); border-color: var(--ink2); }
+
+/* ── RESULT ── */
+#result-screen {
+  display: none;
+  animation: slideIn 0.4s ease both;
+}
+
+.result-banner {
+  background: var(--white);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  padding: 56px 40px;
+  text-align: center;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.result-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--accent);
+}
+
+.result-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.result-score-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.result-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 96px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+}
+
+.result-denom {
+  font-family: 'Playfair Display', serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: -0.02em;
+}
+
+.result-pct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.result-msg {
+  font-size: 15px;
+  color: var(--ink2);
+  font-weight: 300;
+  max-width: 360px;
+  margin: 0 auto 28px;
+  font-style: italic;
+}
+
+.result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-val.green { color: var(--correct); }
+.stat-val.red { color: var(--wrong); }
+.stat-val.amber { color: var(--accent); }
+
+.stat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ── GABARITO ── */
+#gabarito {
+  display: none;
+  animation: slideIn 0.4s ease both;
+  margin-top: 40px;
+}
+
+.gab-masthead {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 16px 0 14px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.gab-masthead h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.gab-masthead .gab-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.gab-item {
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.gab-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.gab-row:hover { background: rgba(0,0,0,0.015); }
+
+.gab-n {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 28px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.gab-q-text { font-size: 14px; color: var(--ink); flex: 1; line-height: 1.5; }
+
+.gab-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.gab-badge.ok { background: var(--correct-light); color: var(--correct); }
+.gab-badge.wrong { background: var(--wrong-light); color: var(--wrong); }
+
+.gab-chevron {
+  color: var(--muted);
+  font-size: 12px;
+  transition: transform 0.25s;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+
+.gab-item.open .gab-chevron { transform: rotate(180deg); }
+
+.gab-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(.4,0,.2,1);
+  padding-left: 44px;
+}
+
+.gab-item.open .gab-body { max-height: 300px; }
+
+.gab-comment {
+  padding-bottom: 18px;
+  font-size: 13px;
+  color: var(--ink2);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.65;
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 16px;
+  margin-bottom: 2px;
+}
+
+.gab-answer-line {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--correct);
+  padding-bottom: 16px;
+  padding-left: 16px;
+}
+
+/* ── FOOTER ── */
+footer {
+  margin-top: 64px;
+  padding: 20px 0;
+  border-top: 1px solid var(--rule-strong);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+@media (max-width: 560px) {
+  .page { padding: 0 20px 80px; }
+  .masthead { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .q-card { padding: 28px 24px 24px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .result-num { font-size: 72px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="masthead-left">
+      <div class="eyebrow">Aula 04 · Prof. Helldânio Barros</div>
+      <h1>Quiz<br><em>Claude</em><br>AI</h1>
+    </div>
+    <div class="masthead-right">
+      <div class="issue-badge">
+        20 QUESTÕES<br>
+        MÚLTIPLA ESCOLHA<br>
+        ANTHROPIC · 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="deck-line">
+    <span>Janela de Contexto</span>
+    <span>Artefatos Interativos</span>
+    <span>Claude Code</span>
+    <span>Memória</span>
+    <span>Constitutional AI</span>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-area">
+    <div class="progress-section">
+      <div class="progress-meta">
+        <span class="label">Progresso</span>
+        <span class="count" id="prog-label">1 / 20</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog"></div>
+      </div>
+      <div class="progress-ticks" id="ticks"></div>
+    </div>
+    <div id="q-container"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-screen">
+    <div class="result-banner">
+      <div class="result-eyebrow">Resultado Final</div>
+      <div class="result-score-wrap">
+        <div class="result-num" id="res-num">0</div>
+        <div class="result-denom">/20</div>
+      </div>
+      <div class="result-pct" id="res-pct">0%</div>
+      <div class="result-msg" id="res-msg"></div>
+      <div class="result-actions">
+        <button class="btn primary" onclick="showGabarito()">Gabarito comentado</button>
+        <button class="btn" onclick="resetQuiz()">Refazer quiz</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val green" id="st-correct">0</div>
+        <div class="stat-label">Acertos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val red" id="st-wrong">0</div>
+        <div class="stat-label">Erros</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val amber" id="st-pct">0%</div>
+        <div class="stat-label">Aproveitamento</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GABARITO -->
+  <div id="gabarito">
+    <div class="gab-masthead">
+      <h2>Gabarito comentado</h2>
+      <span class="gab-count">20 questões</span>
+    </div>
+    <div id="gab-list"></div>
+  </div>
+
+  <footer>
+    <span>Quiz Claude AI — Aula 04</span>
+    <span>Prof. Helldânio Barros · Anthropic 2026</span>
+  </footer>
+
+</div>
+<script>
+const LETTERS = ['A','B','C','D'];
+const CATS = [
+  'Contexto','Artefatos','Arquivos','Claude Code','Memória',
+  'Constitutional AI','Configuração','Personalização','Ollama','Estilos',
+  'Segurança','Contexto','Artefatos','Claude Code','Memória',
+  'Constitutional AI','Configuração','Ollama','Atividades','Conceitos'
+];
+
+const questions = [
+  {
+    q: "Qual é a capacidade da janela de contexto do Claude mencionada na aula?",
+    opts: ["32 mil tokens","128 mil tokens","200 mil tokens","1 milhão de tokens"],
+    ans: 2,
+    fb: "O Claude suporta 200 mil tokens, permitindo analisar documentos inteiros — livros, contratos, bases de código — em uma única conversa. Isso supera os limites práticos do ChatGPT e Gemini no uso diário."
+  },
+  {
+    q: "Qual biblioteca de visualização de dados é citada na aula como compatível com os artefatos interativos do Claude?",
+    opts: ["Chart.js e Highcharts","Recharts e D3","Plotly e Bokeh","Vega e Observable"],
+    ans: 1,
+    fb: "A aula cita Recharts e D3 como bibliotecas usadas nas visualizações de dados geradas pelo Claude como artefatos interativos diretamente na conversa."
+  },
+  {
+    q: "Quais formatos de arquivo o Claude consegue criar e disponibilizar para download diretamente na conversa?",
+    opts: ["Apenas PDF e DOCX","MP4, MP3 e AVI","DOCX, XLSX, PPTX e PDF","JPG, PNG e SVG"],
+    ans: 2,
+    fb: "O Claude pode gerar e disponibilizar para download arquivos DOCX (Word), XLSX (Excel), PPTX (PowerPoint) e PDF — documentos profissionais criados diretamente a partir da conversa."
+  },
+  {
+    q: "Como o Claude Code é descrito na aula em relação ao ChatGPT e ao Gemini?",
+    opts: ["É similar, com pequenas diferenças de interface","É inferior, pois não suporta Python","É exclusivo da Anthropic, não existindo nas outras plataformas","É open source e disponível em todas as plataformas"],
+    ans: 2,
+    fb: "O slide afirma explicitamente: 'Exclusivo da Anthropic — não existe no ChatGPT ou Gemini'. O Claude Code é um agente de codificação via terminal capaz de navegar repositórios e executar tarefas de forma autônoma."
+  },
+  {
+    q: "O que acontece progressivamente nas conversas do Claude com o mesmo usuário, segundo o slide sobre Memória?",
+    opts: ["O Claude esquece conversas antigas para economizar armazenamento","As respostas ficam cada vez mais alinhadas ao estilo do usuário","O Claude passa a responder apenas em inglês","O histórico é deletado após 30 dias"],
+    ans: 1,
+    fb: "O slide ilustra que na Conversa 1 o usuário menciona ser desenvolvedor Python; na Conversa 5 o Claude já adapta exemplos; na Conversa 20 as respostas estão cada vez mais alinhadas ao estilo do usuário."
+  },
+  {
+    q: "Segundo a aula, qual é o comportamento do Claude quando não tem certeza sobre uma informação?",
+    opts: ["Inventa uma resposta plausível com confiança","Diz 'não sei' e sinaliza incerteza claramente","Redireciona para o Google","Recusa responder e encerra a conversa"],
+    ans: 1,
+    fb: "O Constitutional AI treina o Claude para calibrar respostas à evidência disponível — dizendo 'não sei' quando incerto, em vez de inventar fatos com confiança. Isso é parte dos pilares de Segurança por Design da Anthropic."
+  },
+  {
+    q: "Onde o usuário encontra a opção para ativar a memória do Claude nas configurações?",
+    opts: ["Settings → General → Memory","Settings → Privacy → Memory Management","Settings → Account → History","Settings → Appearance → Personalization"],
+    ans: 1,
+    fb: "O caminho correto é Settings → Privacy → Memory Management. Lá o usuário ativa 'Generate memory from chat history' e pode importar contexto de outras IAs como ChatGPT ou Gemini."
+  },
+  {
+    q: "Nas preferências personalizadas do Claude, o que representa o campo 'Quem é você'?",
+    opts: ["O nome de usuário e senha da conta","Uma descrição do público-alvo e experiência profissional do usuário","A preferência de idioma para respostas","O histórico de conversas anteriores"],
+    ans: 1,
+    fb: "O campo 'Quem é você' é onde o usuário descreve seu perfil profissional e público. Exemplo do slide: 'Sou designer UX para startups de tecnologia, trabalhando com times de 5-10 pessoas.'"
+  },
+  {
+    q: "Qual ferramenta é usada para hospedar modelos de IA localmente na instalação do Claude Code sem custo?",
+    opts: ["Docker","Hugging Face","Ollama","LM Studio"],
+    ans: 2,
+    fb: "O Ollama é descrito na aula como a ferramenta que 'hospeda' a IA localmente no PC do usuário, permitindo usar a interface do Claude Code com modelos Open Source sem pagar as taxas da API da Anthropic."
+  },
+  {
+    q: "Onde o usuário acessa a funcionalidade de Estilos de Resposta no Claude?",
+    opts: ["Settings → General → Styles","No campo de mensagem, clicando no ícone + e selecionando Set Style","Settings → Privacy → Custom Styles","No menu lateral, em Ferramentas Avançadas"],
+    ans: 1,
+    fb: "A aula orienta: no campo de mensagem, clique no ícone + e selecione Set Style. Lá é possível escolher estilos prontos (Normal, Concise, Explanatory) ou criar estilos personalizados como 'Executivo Direto'."
+  },
+  {
+    q: "Quais são os três pilares do Constitutional AI apresentados no slide sobre 'IA Segura & Honesta'?",
+    opts: ["Velocidade, precisão e custo","Menos alucinações, raciocínio transparente e segurança por design","Criatividade, produtividade e segurança","Código, texto e imagem"],
+    ans: 1,
+    fb: "O slide organiza os benefícios do Constitutional AI em três pilares: Menos Alucinações (calibra respostas à evidência), Raciocínio Transparente (explica passo a passo) e Segurança por Design (treinamento baseado em princípios éticos)."
+  },
+  {
+    q: "Para que tipo de tarefa a janela de contexto de 200K tokens é especialmente indicada na aula?",
+    opts: ["Geração de imagens de alta resolução","Análise jurídica, relatórios longos e projetos complexos","Tradução simultânea de múltiplos idiomas","Criação de modelos 3D e animações"],
+    ans: 1,
+    fb: "O slide destaca que a janela de 200K tokens é 'ideal para análise jurídica, relatórios longos e projetos complexos', pois permite processar documentos inteiros de uma única vez."
+  },
+  {
+    q: "Qual tipo de componente de interface o Claude pode criar como artefato interativo?",
+    opts: ["Apenas páginas HTML estáticas","Somente gráficos em formato PNG","Componentes React com hooks, estado e lógica completa","Exclusivamente apresentações em PowerPoint"],
+    ans: 2,
+    fb: "O slide especifica que os artefatos interativos incluem Componentes React com 'UIs interativas com hooks, estado e lógica completa' — renderizados diretamente na conversa, sem sair do chat."
+  },
+  {
+    q: "O que o Claude Code faz ao receber o comando 'Analise o repositório e corrija os bugs no módulo de autenticação'?",
+    opts: ["Exibe apenas um relatório com os erros encontrados","Lê os arquivos, encontra os bugs e aplica as correções automaticamente","Solicita ao usuário que forneça o código manualmente","Redireciona o usuário para a documentação oficial"],
+    ans: 1,
+    fb: "O exemplo no slide mostra exatamente isso: o Claude Code lê 47 arquivos, encontra 3 bugs e aplica as correções — tudo de forma autônoma, via terminal, sem intervenção manual do usuário."
+  },
+  {
+    q: "Qual é o passo 2 recomendado para configurar a memória do Claude, após ativá-la?",
+    opts: ["Perguntar 'O que você sabe sobre mim?' para verificar os dados","Desativar e reativar a memória para recarregar","Enviar uma instrução inicial descrevendo nome, profissão, desafios e preferência de idioma","Importar o histórico do ChatGPT automaticamente"],
+    ans: 2,
+    fb: "Após ativar a memória (Passo 1), o Passo 2 é enviar uma instrução inicial descrevendo: nome e profissão, segmento e tamanho da equipe, desafios e objetivos, e preferência de idioma. O Passo 3 é confirmar perguntando 'O que você sabe sobre mim?'"
+  },
+  {
+    q: "O que o Claude faz com perspectivas alternativas quando responde a uma pergunta, segundo o slide sobre raciocínio?",
+    opts: ["As ignora para manter respostas objetivas","As apresenta ao usuário junto com a resposta principal","As registra apenas no histórico interno","As evita para não confundir o usuário"],
+    ans: 1,
+    fb: "O slide 'Raciocínio Transparente' afirma que o Claude 'apresenta perspectivas alternativas', além de explicar o raciocínio passo a passo e sinalizar incerteza claramente."
+  },
+  {
+    q: "Qual é a funcionalidade do 'Comando de dúvida' nas preferências personalizadas do Claude?",
+    opts: ["Fazer o Claude simplificar respostas técnicas automaticamente","Fazer o Claude perguntar ao usuário antes de assumir algo, evitando respostas genéricas","Ativar notificações quando o Claude tiver baixa confiança","Limitar o tamanho das respostas a 200 palavras"],
+    ans: 1,
+    fb: "O 'Comando de dúvida' instrui: 'Sempre que houver dúvida, me pergunte antes de assumir algo'. Isso evita que o Claude preencha lacunas de contexto com suposições, resultando em respostas mais precisas e personalizadas."
+  },
+  {
+    q: "Ao usar o Ollama localmente, qual é o modelo recomendado na aula e por quê?",
+    opts: ["LLaMA 3 70B, por ser o mais popular","Claude Haiku, por ser o mais leve da Anthropic","GLM 4.7 Flash, por ser rápido e eficiente para criar páginas","Mistral 7B, por ter melhor suporte a português"],
+    ans: 2,
+    fb: "O slide recomenda o GLM 4.7 Flash (ou similar) como modelo local por ser 'rápido e eficiente para criar páginas'. Ressaltando que não se trata dos modelos pagos da Anthropic, mas sim de modelos Open Source."
+  },
+  {
+    q: "Qual atividade prática da aula tem duração estimada de 120 minutos e é classificada como avançada?",
+    opts: ["Dashboard em HTML","Gerador de Dataset Sintético","Revisor de Artigo Científico","Projeto Integrador: Mini-Produto"],
+    ans: 3,
+    fb: "O 'Projeto Integrador: Mini-Produto' é a única atividade com 120 minutos de duração, classificada como Avançada (vermelho). É a atividade mais complexa, integrando todas as habilidades das 9 anteriores."
+  },
+  {
+    q: "Segundo a aula, qual é o principal diferencial do Claude em relação à segurança no uso em escala?",
+    opts: ["Criptografia ponta a ponta de todas as conversas","Treinamento baseado em princípios éticos voltado para uso responsável em escala","Armazenamento zero de dados do usuário","Revisão humana de todas as respostas antes do envio"],
+    ans: 1,
+    fb: "O slide 'Segurança por Design' destaca que o Claude é 'desenvolvido para uso responsável em escala', com treinamento baseado em princípios éticos e capacidade de evitar conteúdo prejudicial proativamente — diferenciais centrais do Constitutional AI."
+  }
+];
+
+let current = 0, score = 0;
+const answered = new Array(questions.length).fill(null);
+
+function buildTicks() {
+  const wrap = document.getElementById('ticks');
+  wrap.innerHTML = questions.map((_,i) => `<div class="tick" id="tick-${i}"></div>`).join('');
+}
+
+function updateTick(i, correct) {
+  const t = document.getElementById('tick-' + i);
+  if (t) t.className = 'tick ' + (correct ? 'done-correct' : 'done-wrong');
+}
+
+function setCurrentTick(i) {
+  const t = document.getElementById('tick-' + i);
+  if (t && answered[i] === null) t.className = 'tick current';
+}
+
+function renderQ(i) {
+  const q = questions[i];
+  const done = answered[i] !== null;
+  const chosen = answered[i];
+  const cat = CATS[i] || 'Conceitos';
+
+  const opts = q.opts.map((o, j) => {
+    let cls = '';
+    if (done) cls = j === q.ans ? 'correct' : (j === chosen ? 'wrong' : '');
+    return `<button class="opt-btn ${cls}" onclick="choose(${i},${j})" ${done?'disabled':''}>
+      <span class="opt-key">${LETTERS[j]}.</span>
+      <span>${o}</span>
+    </button>`;
+  }).join('');
+
+  let fb = '';
+  if (done) {
+    const ok = chosen === q.ans;
+    fb = `<div class="feedback show ${ok?'ok':'err'}">
+      <strong>${ok ? '✓ Correto!' : '✗ Incorreto.'}</strong> ${q.fb}
+    </div>`;
+  }
+
+  const isLast = i === questions.length - 1;
+  const nd = !done ? 'disabled' : '';
+
+  return `<div class="q-card">
+    <div class="q-header">
+      <div class="q-num">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="q-category">${cat}</div>
+      </div>
+    </div>
+    <div class="q-text">${q.q}</div>
+    <div class="options">${opts}</div>
+    ${fb}
+    <div class="nav-row">
+      <button class="btn" onclick="go(${i-1})" ${i===0?'disabled':''}>← Anterior</button>
+      <div class="score-info"><strong>${score}</strong> acerto${score!==1?'s':''} de ${i} respondida${i!==1?'s':''}</div>
+      ${isLast
+        ? `<button class="btn primary" onclick="finish()" ${nd}>Resultado →</button>`
+        : `<button class="btn primary" onclick="go(${i+1})" ${nd}>Próxima →</button>`}
+    </div>
+  </div>`;
+}
+
+function updateProgress(i) {
+  const pct = Math.round((i+1)/questions.length*100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = (i+1) + ' / ' + questions.length;
+}
+
+function choose(qi, opt) {
+  if (answered[qi] !== null) return;
+  answered[qi] = opt;
+  const ok = opt === questions[qi].ans;
+  if (ok) score++;
+  updateTick(qi, ok);
+  document.getElementById('q-container').innerHTML = renderQ(qi);
+}
+
+function go(i) {
+  if (i < 0 || i >= questions.length) return;
+  current = i;
+  document.getElementById('q-container').innerHTML = renderQ(i);
+  updateProgress(i);
+  setCurrentTick(i);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function finish() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  const pct = Math.round(score/questions.length*100);
+  document.getElementById('res-num').textContent = score;
+  document.getElementById('res-pct').textContent = pct + '%';
+  document.getElementById('st-correct').textContent = score;
+  document.getElementById('st-wrong').textContent = questions.length - score;
+  document.getElementById('st-pct').textContent = pct + '%';
+  const msgs = [
+    '"O aprendizado começa com a primeira tentativa. Revise os slides e tente novamente."',
+    '"Boa base! Alguns conceitos precisam de mais atenção — você está no caminho certo."',
+    '"Sólido domínio do conteúdo. Revise os detalhes e chegue ao topo."',
+    '"Excelente! Você domina as funcionalidades e diferenciais do Claude com maestria."'
+  ];
+  const idx = score <= 7 ? 0 : score <= 12 ? 1 : score <= 17 ? 2 : 3;
+  document.getElementById('res-msg').textContent = msgs[idx];
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showGabarito() {
+  const gab = document.getElementById('gabarito');
+  gab.style.display = 'block';
+  const list = document.getElementById('gab-list');
+  list.innerHTML = questions.map((q, i) => {
+    const userAns = answered[i];
+    const ok = userAns === q.ans;
+    const badgeCls = ok ? 'ok' : 'wrong';
+    const badgeTxt = LETTERS[q.ans] + ' — ' + (ok ? 'Acerto' : 'Erro');
+    return `<div class="gab-item" id="gab-${i}">
+      <div class="gab-row" onclick="toggleGab(${i})">
+        <span class="gab-n">Q${String(i+1).padStart(2,'0')}</span>
+        <span class="gab-q-text">${q.q}</span>
+        <span class="gab-badge ${badgeCls}">${badgeTxt}</span>
+        <span class="gab-chevron">▾</span>
+      </div>
+      <div class="gab-body">
+        <div class="gab-answer-line">Resposta correta: ${LETTERS[q.ans]}. ${q.opts[q.ans]}</div>
+        <p class="gab-comment">${q.fb}</p>
+      </div>
+    </div>`;
+  }).join('');
+  gab.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function toggleGab(i) {
+  document.getElementById('gab-'+i).classList.toggle('open');
+}
+
+function resetQuiz() {
+  score = 0; current = 0;
+  for (let i=0;i<answered.length;i++) answered[i]=null;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('gabarito').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  buildTicks();
+  go(0);
+}
+
+buildTicks();
+go(0);
+</script>
+</body>
+</html>
